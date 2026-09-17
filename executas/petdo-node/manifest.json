@@ -1,0 +1,95 @@
+{
+  "display_name": "PetDo",
+  "version": "1.0.1",
+  "description": "AI-native pet task buddy: add tasks by chat or voice, a virtual cat reacts to your progress, with weekly/monthly/yearly reports (category pie + completion bars) and durable per-user cloud storage.",
+  "author": "petdo",
+  "tags": ["productivity", "todo", "tasks", "pet", "anna-app", "ai-native"],
+  "host_capabilities": ["aps.kv", "llm.sample"],
+  "runtime": { "type": "node", "min_version": "18.0.0" },
+  "tools": [
+    {
+      "name": "parse_text",
+      "description": "Parse a free-text sentence describing one or more tasks (e.g. \"明天下午3点写周报\", \"buy milk, call mom\") into structured draft tasks (title, category, priority, due date). Returns drafts for confirmation; does NOT save anything.",
+      "parameters": [
+        { "name": "text", "type": "string", "description": "The raw task sentence", "required": true }
+      ]
+    },
+    {
+      "name": "add_task",
+      "description": "Save one task. Use after the user confirms a parsed draft, or when title and details are clear.",
+      "parameters": [
+        { "name": "title", "type": "string", "description": "Task title, max 80 chars", "required": true },
+        { "name": "category", "type": "string", "description": "One of: work/study/life/health/other (default other)", "required": false },
+        { "name": "priority", "type": "string", "description": "high/normal/low (default normal)", "required": false },
+        { "name": "due", "type": "string", "description": "Due date YYYY-MM-DD, optional", "required": false },
+        { "name": "source", "type": "string", "description": "manual/voice/chat, default chat", "required": false }
+      ]
+    },
+    {
+      "name": "complete_task",
+      "description": "Mark a task as done. Awards pet XP (more for high priority and on-time completion).",
+      "parameters": [
+        { "name": "id", "type": "string", "description": "Task id", "required": true }
+      ]
+    },
+    {
+      "name": "uncomplete_task",
+      "description": "Reopen a completed task and deduct the XP it awarded.",
+      "parameters": [
+        { "name": "id", "type": "string", "description": "Task id", "required": true }
+      ]
+    },
+    {
+      "name": "update_task",
+      "description": "Update a task's title, category, priority or due date.",
+      "parameters": [
+        { "name": "id", "type": "string", "description": "Task id", "required": true },
+        { "name": "title", "type": "string", "description": "New title", "required": false },
+        { "name": "category", "type": "string", "description": "New category: work/study/life/health/other", "required": false },
+        { "name": "priority", "type": "string", "description": "New priority: high/normal/low", "required": false },
+        { "name": "due", "type": "string", "description": "New due date YYYY-MM-DD; pass empty string to clear", "required": false }
+      ]
+    },
+    {
+      "name": "delete_task",
+      "description": "Delete one task by id.",
+      "parameters": [
+        { "name": "id", "type": "string", "description": "Task id", "required": true }
+      ]
+    },
+    {
+      "name": "list_tasks",
+      "description": "List tasks. filter=today (due today or overdue, undated tasks, plus done today), overdue, week (due within this week), or all (newest first). Returns the pet snapshot too.",
+      "parameters": [
+        { "name": "filter", "type": "string", "description": "today/overdue/week/all (default all)", "required": false }
+      ]
+    },
+    {
+      "name": "get_state",
+      "description": "Full snapshot for hydrating the app window: all tasks, pet state (xp/level/mood/streak), and meta.",
+      "parameters": []
+    },
+    {
+      "name": "get_stats",
+      "description": "Aggregated stats for a period: per-category totals/done (for pie chart), completion rate, daily (week/month) or monthly (year) buckets.",
+      "parameters": [
+        { "name": "period", "type": "string", "description": "week/month/year (default week)", "required": false },
+        { "name": "anchor", "type": "string", "description": "A date inside the period, YYYY-MM-DD (default today)", "required": false }
+      ]
+    },
+    {
+      "name": "summarize_period",
+      "description": "Write a short AI report for week/month/year based on task stats. Use when the user asks for a summary or review.",
+      "parameters": [
+        { "name": "period", "type": "string", "description": "week/month/year (default week)", "required": false },
+        { "name": "anchor", "type": "string", "description": "A date inside the period, YYYY-MM-DD (default today)", "required": false },
+        { "name": "lang", "type": "string", "description": "zh or en (default zh)", "required": false }
+      ]
+    },
+    {
+      "name": "pet_pat",
+      "description": "Pat the cat. Returns the pet state and a mood-based message (_zh Chinese / _en English). Just for fun.",
+      "parameters": []
+    }
+  ]
+}
