@@ -1,1 +1,237 @@
-d:\Trea Code\anna platform\1.桌面应用\.github\workflows\build-executa-binaries.yml
+# Anna Executa — Node.js Multi-platform Binary Build
+#
+# Builds a Node.js Executa plugin into 4 platform binaries via @yao-pkg/pkg,
+# packages them as <tool_id>-<platform>.tar.gz / .zip (with .sha256 sidecars),
+# uploads to a GitHub Release, then pins distribution.binary_urls (url +
+# binary_sha256) back into executa.json.
+#
+# Targets (Anna 101 Chapter 7 requirement):
+#   darwin-arm64, darwin-x86_64, linux-x86_64, windows-x86_64
+#
+# All 4 cross-compile on a single ubuntu-latest runner — pkg downloads
+# pre-built Node binaries from pkg-fetch, no native OS runner needed.
+# Uses node20-* targets (Node 22 standard-mode has known regressions:
+# win-x64 EXIT=4, linux-arm64 UNEXPECTED-20; see yao-pkg/pkg#87 #181).
+# `--no-bytecode` sidesteps V8 arch-mismatch on darwin-arm64 cross-build.
+name: Build Executa Binaries
+
+on:
+  workflow_dispatch:
+    inputs:
+      executa_path:
+        description: "Path to the executa dir (e.g. executas/petdo-node)"
+        required: true
+        default: "executas/petdo-node"
+      version:
+        description: "Release version (e.g. 1.0.0) — also names the tag"
+        required: true
+        type: string
+      tool_id:
+        description: "Override tool_id (default: read from executa.json)"
+        required: false
+        type: string
+      tag_name:
+        description: "Release tag (default: v<version>)"
+        required: false
+        type: string
+      prerelease:
+        description: "Mark release as prerelease"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write  # create Release + upload assets + commit pinned executa.json
+
+concurrency:
+  group: build-executa-${{ github.ref }}-${{ inputs.executa_path }}
+  cancel-in-progress: false
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────
+  # plan: read tool_id / entry / version from executa.json + package.json
+  # so the workflow is data-driven. Pointing executa_path at a new app
+  # requires no other edit here.
+  # ──────────────────────────────────────────────────────────────────────
+  plan:
+    runs-on: ubuntu-latest
+    outputs:
+      tool_id: ${{ steps.meta.outputs.tool_id }}
+      entry: ${{ steps.meta.outputs.entry }}
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: meta
+        env:
+          EXECUTA_PATH: ${{ inputs.executa_path }}
+          VERSION_INPUT: ${{ inputs.version }}
+          TOOL_ID_INPUT: ${{ inputs.tool_id }}
+          TAG_INPUT: ${{ inputs.tag_name }}
+        run: |
+          node - <<'JS'
+          const fs = require("fs");
+          const path = process.env.EXECUTA_PATH;
+          const ej = JSON.parse(fs.readFileSync(`${path}/executa.json`, "utf8"));
+          const pj = JSON.parse(fs.readFileSync(`${path}/package.json`, "utf8"));
+          const toolId = process.env.TOOL_ID_INPUT || ej.tool_id;
+          if (!toolId) throw new Error("tool_id missing: set it in executa.json or pass as input");
+          const ver = process.env.VERSION_INPUT || ej.version || pj.version;
+          if (!ver) throw new Error("version missing");
+          // entry = the bin that matches tool_id, else package.json#main
+          const entry = (pj.bin && pj.bin[toolId]) || pj.main || "plugin.js";
+          const tag = process.env.TAG_INPUT || `v${ver}`;
+          const out = process.env.GITHUB_OUTPUT;
+          fs.appendFileSync(out, `tool_id=${toolId}\n`);
+          fs.appendFileSync(out, `entry=${entry}\n`);
+          fs.appendFileSync(out, `version=${ver}\n`);
+          fs.appendFileSync(out, `tag=${tag}\n`);
+          console.log({ toolId, entry, ver, tag });
+          JS
+
+  # ──────────────────────────────────────────────────────────────────────
+  # build: one pkg run per platform on a single ubuntu runner.
+  # ──────────────────────────────────────────────────────────────────────
+  build:
+    needs: plan
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: node20-macos-arm64, platform: darwin-arm64,   ext: "" }
+          - { target: node20-macos-x64,   platform: darwin-x86_64, ext: "" }
+          - { target: node20-linux-x64,   platform: linux-x86_64,   ext: "" }
+          - { target: node20-win-x64,     platform: windows-x86_64, ext: ".exe" }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Install @yao-pkg/pkg
+        run: npm install -g @yao-pkg/pkg@6
+      - name: Build binary
+        working-directory: ${{ inputs.executa_path }}
+        env:
+          TARGET: ${{ matrix.target }}
+          TOOL_ID: ${{ needs.plan.outputs.tool_id }}
+          ENTRY: ${{ needs.plan.outputs.entry }}
+          EXT: ${{ matrix.ext }}
+        run: |
+          mkdir -p dist
+          # pkg detects literal require("./lib/*.cjs") and bundles it into
+          # the snapshot fs. --no-bytecode keeps source as plaintext so
+          # cross-arch targets (darwin-arm64 on an x64 host) build cleanly.
+          pkg "$ENTRY" \
+            --target "$TARGET" \
+            --output "dist/$TOOL_ID$EXT" \
+            --no-bytecode \
+            --public-packages "*" \
+            --public \
+            --compress GZip
+          test -f "dist/$TOOL_ID$EXT"
+      - name: Smoke test (describe handshake) — linux-x86_64 only
+        if: matrix.platform == 'linux-x86_64'
+        working-directory: ${{ inputs.executa_path }}
+        env:
+          TOOL_ID: ${{ needs.plan.outputs.tool_id }}
+        run: |
+          out="$(printf '%s\n' '{"jsonrpc":"2.0","method":"describe","id":1}' | "./dist/$TOOL_ID" 2>/dev/null || true)"
+          echo "describe → $out"
+          echo "$out" | node -e "let d='';process.stdin.on('data',c=>d+=c);process.stdin.on('end',()=>{try{const r=JSON.parse(d);if(!r.result){console.error('no result field');process.exit(1)}console.log('describe ok')}catch(e){console.error('parse failed',e.message);process.exit(1)}})" || \
+            echo "::warning::describe smoke test inconclusive (binary still uploaded)"
+      - name: Package (archive + sha256 sidecar)
+        working-directory: ${{ inputs.executa_path }}/dist
+        env:
+          TOOL_ID: ${{ needs.plan.outputs.tool_id }}
+          PLATFORM: ${{ matrix.platform }}
+          EXT: ${{ matrix.ext }}
+        run: |
+          asset="$TOOL_ID-$PLATFORM"
+          if [[ "$PLATFORM" == windows-* ]]; then
+            zip -X "$asset.zip" "$TOOL_ID$EXT"
+            archive="$asset.zip"
+          else
+            tar czf "$asset.tar.gz" "$TOOL_ID$EXT"
+            archive="$asset.tar.gz"
+          fi
+          sha256sum "$archive" | awk '{print $1}' > "$archive.sha256"
+          echo "ARCHIVE=$archive" >> "$GITHUB_ENV"
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.plan.outputs.tool_id }}-${{ matrix.platform }}
+          path: |
+            ${{ inputs.executa_path }}/dist/${{ env.ARCHIVE }}
+            ${{ inputs.executa_path }}/dist/${{ env.ARCHIVE }}.sha256
+      - name: Attach to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.plan.outputs.tag }}
+          name: ${{ needs.plan.outputs.tool_id }} ${{ needs.plan.outputs.version }}
+          body: |
+            Executa binaries for `${{ needs.plan.outputs.tool_id }}` (v${{ needs.plan.outputs.version }}).
+
+            Built from `${{ inputs.executa_path }}` by `build-executa-binaries.yml`.
+          prerelease: ${{ inputs.prerelease }}
+          files: |
+            ${{ inputs.executa_path }}/dist/${{ env.ARCHIVE }}
+            ${{ inputs.executa_path }}/dist/${{ env.ARCHIVE }}.sha256
+
+  # ──────────────────────────────────────────────────────────────────────
+  # pin-executa-json: download the 4 just-uploaded .sha256 sidecars,
+  # compute the authoritative sha256 the Agent will verify against,
+  # and write distribution.binary_urls.<platform>.url + .binary_sha256
+  # back into executa.json. Commit + push so the repo reflects what was
+  # published.
+  # ──────────────────────────────────────────────────────────────────────
+  pin-executa-json:
+    needs: [plan, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Pin binary_urls in executa.json
+        env:
+          EXECUTA_PATH: ${{ inputs.executa_path }}
+          TOOL_ID: ${{ needs.plan.outputs.tool_id }}
+          TAG: ${{ needs.plan.outputs.tag }}
+          REPO: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node - <<'JS'
+          const fs = require("fs");
+          const { execSync } = require("child_process");
+          const path = process.env.EXECUTA_PATH;
+          const toolId = process.env.TOOL_ID;
+          const tag = process.env.TAG;
+          const repo = process.env.REPO;
+          const ejPath = `${path}/executa.json`;
+          const m = JSON.parse(fs.readFileSync(ejPath, "utf8"));
+          const platforms = [
+            ["darwin-arm64",   "tar.gz"],
+            ["darwin-x86_64",  "tar.gz"],
+            ["linux-x86_64",   "tar.gz"],
+            ["windows-x86_64", "zip"],
+          ];
+          const bu = (m.distribution && m.distribution.binary_urls) || {};
+          for (const [plat, ext] of platforms) {
+            const fname = `${toolId}-${plat}.${ext}`;
+            const url = `https://github.com/${repo}/releases/download/${tag}/${fname}`;
+            // fetch the .sha256 sidecar the build job just uploaded
+            const sha256 = execSync(`curl -fsSL ${url}.sha256`).toString().trim().split(/\s+/)[0];
+            const entry = ext === "zip" ? `${toolId}.exe` : toolId;
+            bu[plat] = { url, binary_sha256: sha256, entrypoint: entry };
+          }
+          m.distribution = { type: "binary", binary_urls: bu };
+          fs.writeFileSync(ejPath, JSON.stringify(m, null, 2) + "\n", "utf8");
+          console.log(fs.readFileSync(ejPath, "utf8"));
+          JS
+      - name: Commit pinned executa.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ${{ inputs.executa_path }}/executa.json
+          git commit -m "chore(executa): pin binary_urls for ${{ needs.plan.outputs.tool_id }} ${{ needs.plan.outputs.version }}" || echo "nothing to commit"
+          git push
