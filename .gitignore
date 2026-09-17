@@ -1,0 +1,28 @@
+# ──搁置的桌面版（Electron 子项目，Anna Web 不需要）──
+petdo-desktop/
+
+# ──Visual Studio / Office 自动生成的缓存目录──
+Microsoft/
+
+# ──Node / Vite / 构建产物──
+node_modules/
+bundle/
+dist/
+*.log
+
+# ──pkg + GitHub Actions build artifacts──
+*.sha256
+*.tar.gz
+*.zip
+!icon.svg
+
+# ──Anna 本地运行时缓存──
+.anna/
+.anna-home/
+
+# ──Trae / IDE / OS──
+.trae/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
