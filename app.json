@@ -1,0 +1,12 @@
+{
+  "slug": "petdo",
+  "bundled_executas": {
+    "petdo": { "path": "executas/petdo-node" }
+  },
+  "name": "PetDo · Pet Task Buddy",
+  "logo_file": "ui/public/icon.svg",
+  "tagline": "A cat that grows when you get things done",
+  "description": "Most to-do apps are abandoned within days — not because people are lazy, but because a lifeless checklist gives nothing back. PetDo changes that: a virtual cat lives in your task list and reacts to everything you do. Capture tasks by just saying a sentence — \"remind me to send the report tomorrow morning\" — and AI extracts the title, category, priority and due date. Finish a task and your cat earns XP, levels up from kitten to legend, and cheers for you; procrastinate and it gets sad (then sleepy). The Reports tab turns your history into weekly, monthly and yearly reviews: a category pie chart of where your effort goes, completion-rate progress bars, daily/monthly trends, and an AI-written summary with one concrete suggestion. Tasks sync across devices through Anna's cloud storage — no account setup, no server, no API keys.",
+  "category": "productivity",
+  "screenshots": []
+}
