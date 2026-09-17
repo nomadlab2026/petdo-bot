@@ -1,0 +1,35 @@
+{
+  "slug": "petdo",
+  "name": "PetDo · Pet Task Buddy",
+  "version": "1.0.1",
+  "executa_type": "tool",
+  "description": "Local executa plugin for PetDo: natural-language/voice task parsing, task storage with pet XP progression, weekly/monthly/yearly stats. Anna Executa stdio JSON-RPC plugin (Node.js, zero dependencies).",
+  "tool_id": "tool-airamuse-petdo-etxhvhta",
+  "type": "node",
+  "enabled": true,
+  "distribution": {
+    "type": "binary",
+    "binary_urls": {
+      "darwin-arm64": {
+        "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-darwin-arm64.tar.gz",
+        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "entrypoint": "tool-airamuse-petdo-etxhvhta"
+      },
+      "darwin-x86_64": {
+        "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-darwin-x86_64.tar.gz",
+        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "entrypoint": "tool-airamuse-petdo-etxhvhta"
+      },
+      "linux-x86_64": {
+        "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-linux-x86_64.tar.gz",
+        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "entrypoint": "tool-airamuse-petdo-etxhvhta"
+      },
+      "windows-x86_64": {
+        "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-windows-x86_64.zip",
+        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "entrypoint": "tool-airamuse-petdo-etxhvhta.exe"
+      }
+    }
+  }
+}
