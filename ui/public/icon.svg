@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="112" fill="#FF8A65"/>
+  <!-- 耳朵 -->
+  <path d="M168 132 L132 76 L196 116 Z" fill="#FF8A65" stroke="#3D2E2A" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M344 132 L380 76 L316 116 Z" fill="#FF8A65" stroke="#3D2E2A" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M168 132 L140 92 L186 116 Z" fill="#FFD4C4"/>
+  <path d="M344 132 L372 92 L326 116 Z" fill="#FFD4C4"/>
+  <!-- 脸 -->
+  <ellipse cx="256" cy="288" rx="148" ry="136" fill="#FF8A65" stroke="#3D2E2A" stroke-width="10"/>
+  <!-- 脸颊 -->
+  <ellipse cx="168" cy="316" rx="36" ry="28" fill="#FFD4C4" opacity="0.6"/>
+  <ellipse cx="344" cy="316" rx="36" ry="28" fill="#FFD4C4" opacity="0.6"/>
+  <!-- 眼睛 -->
+  <ellipse cx="200" cy="268" rx="20" ry="26" fill="#3D2E2A"/>
+  <ellipse cx="312" cy="268" rx="20" ry="26" fill="#3D2E2A"/>
+  <circle cx="208" cy="260" r="7" fill="#FFFFFF"/>
+  <circle cx="320" cy="260" r="7" fill="#FFFFFF"/>
+  <!-- 鼻子 -->
+  <path d="M256 310 L240 300 Q256 296 272 300 Z" fill="#3D2E2A"/>
+  <!-- 嘴 -->
+  <path d="M256 314 Q256 332 236 328 M256 314 Q256 332 276 328" stroke="#3D2E2A" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <!-- 胡须 -->
+  <line x1="136" y1="304" x2="176" y2="310" stroke="#3D2E2A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="136" y1="324" x2="176" y2="324" stroke="#3D2E2A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="376" y1="304" x2="336" y2="310" stroke="#3D2E2A" stroke-width="4" stroke-linecap="round"/>
+  <line x1="376" y1="324" x2="336" y2="324" stroke="#3D2E2A" stroke-width="4" stroke-linecap="round"/>
+</svg>
