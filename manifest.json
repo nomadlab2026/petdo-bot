@@ -1,0 +1,63 @@
+{
+  "schema": 2,
+  "permissions": [
+    "tools.invoke",
+    "storage.read",
+    "storage.write",
+    "chat.append_artifact"
+  ],
+  "required_executas": [
+    {
+      "tool_id": "bundled:petdo",
+      "min_version": "1.0.0",
+      "version": "latest"
+    }
+  ],
+  "optional_executas": [],
+  "host_capabilities": ["aps.kv", "llm.sample"],
+  "system_prompt_addendum": "You are the assistant for PetDo, a pet task buddy app: the user tracks daily tasks and a virtual cat reacts to their progress.\n- When the user mentions tasks to do (e.g. \"remind me to write the report tomorrow\", \"明天交作业\", \"buy milk then call mom\"), call the petdo Executa tool `parse_text` with {\"text\": \"...\"}. Messages containing the trigger word \"#petdo\" are always task intents — parse and add without asking. If it returns drafts, briefly confirm each (title/category/due), then call `add_task` per draft with {title, category, priority, due, source:\"chat\"}. If the title is unclear, ask one clarifying question — never invent a task.\n- When the user asks what to do today / what is due / morning planning, call `list_tasks` with {\"filter\":\"today\"} and answer concisely; mention overdue items first.\n- When the user says they finished something (\"交完报告了\", \"done with the report\"), find the matching task from `list_tasks` and call `complete_task` with {id}; tell them how much pet XP was earned.\n- When the user asks about stats or wants a weekly/monthly/yearly review, call `get_stats` or `summarize_period` with {\"period\":\"week\"|\"month\"|\"year\"}. Report completion rate, top categories, and what the AI report says. Never expose raw JSON.\n- After adding or completing tasks in chat, use chat.append_artifact with a one-line summary card so the app window stays in sync.\n- The app window cannot use the microphone; if the user wants voice input, tell them to speak in this chat directly.\n- Keep replies short, warm, and in the user's language. The cat's name is shown in the app; you may reference the cat's mood from tool results.",
+  "tags": ["productivity", "todo", "tasks", "pet", "gamification", "ai"],
+  "ui": {
+    "bundle": {
+      "format": "static-spa",
+      "entry": "index.html",
+      "external_origins": []
+    },
+    "views": [
+      {
+        "name": "main",
+        "title": "PetDo · Pet Task Buddy",
+        "default": true,
+        "entry": "index.html",
+        "min_size": { "w": 360, "h": 560 },
+        "default_size": { "w": 1024, "h": 760 },
+        "max_size": { "w": 1500, "h": 1000 },
+        "resizable": true,
+        "movable": true,
+        "single_instance": true,
+        "icon": "icon.svg"
+      }
+    ],
+    "host_api": {
+      "tools": ["required:*"],
+      "chat": ["append_artifact"],
+      "artifact": [],
+      "llm": [],
+      "fs": [],
+      "storage": ["get", "set", "delete", "list"],
+      "prefs": [],
+      "window": ["set_title"]
+    },
+    "csp_overrides": {
+      "img-src": ["'self'", "data:", "blob:"],
+      "font-src": ["'self'", "data:"],
+      "style-src": ["'self'"],
+      "script-src": ["'self'"]
+    },
+    "state_merge": "last_writer_wins"
+  },
+  "dev": {
+    "seed_storage": {},
+    "user_id": 1
+  }
+}
