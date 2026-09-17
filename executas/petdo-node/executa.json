@@ -12,22 +12,22 @@
     "binary_urls": {
       "darwin-arm64": {
         "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-darwin-arm64.tar.gz",
-        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "binary_sha256": "b54a78c1ad1facddf8039334344db5fab689939955fbb54a0c49c69f69b6b43c",
         "entrypoint": "tool-airamuse-petdo-etxhvhta"
       },
       "darwin-x86_64": {
         "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-darwin-x86_64.tar.gz",
-        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "binary_sha256": "b2eb710ac32d7423f36d669187994bbc4ec0aa8b2158014ceedfb36be88533b0",
         "entrypoint": "tool-airamuse-petdo-etxhvhta"
       },
       "linux-x86_64": {
         "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-linux-x86_64.tar.gz",
-        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "binary_sha256": "863bf2c801f4c819e668e39190e77c69893c1e91b81bbbc8d7280e2083f0f4f3",
         "entrypoint": "tool-airamuse-petdo-etxhvhta"
       },
       "windows-x86_64": {
         "url": "https://github.com/nomadlab2026/petdo-bot/releases/download/v1.0.1/tool-airamuse-petdo-etxhvhta-windows-x86_64.zip",
-        "binary_sha256": "REPLACE_AFTER_BUILD",
+        "binary_sha256": "5f70500d922fbc31b9d94794d35c99f3ff604df977df90e95fdf1a79b5d58f8f",
         "entrypoint": "tool-airamuse-petdo-etxhvhta.exe"
       }
     }
