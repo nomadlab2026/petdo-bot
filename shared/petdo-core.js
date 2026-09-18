@@ -46,7 +46,8 @@ export function resolveDate(text, now) {
     const target = shiftDays(mon, WD_MAP[wd[1]] ?? 0);
     return target < base ? shiftDays(target, 7) : target; // 本周已过的周X归下周
   }
-  const md = /(\d{1,2})月(\d{1,2})[日号]/.exec(t);
+  // 支持 9月19 / 9月19日 / 9/19（"日/号"可省略）
+  const md = /(\d{1,2})\s*(?:月|[\/])\s*(\d{1,2})\s*[日号]?/.exec(t);
   if (md) {
     let y = now.getFullYear();
     let iso = `${y}-${pad2(+md[1])}-${pad2(+md[2])}`;
@@ -64,6 +65,37 @@ export function resolveDate(text, now) {
   return null;
 }
 const WD_MAP = { "一": 0, "二": 1, "三": 2, "四": 3, "五": 4, "六": 5, "日": 6, "天": 6 };
+
+// ---------------------------------------------------------------------------
+// 时间工具（HH:MM，与桌面版同源）
+// ---------------------------------------------------------------------------
+const TIME_CN_RE = /(上午|早上|凌晨|中午|下午|晚上|傍晚)?\s*(\d{1,2})\s*[点时]\s*(?:(\d{1,2})\s*分)?\s*钟?/;
+const TIME_CN_RE_G = new RegExp(TIME_CN_RE.source, "g");
+
+/** 从文本提取时间（HH:MM）。支持 "下午3点"→"15:00"、"10:30"、"晚上8点30分"→"20:30" */
+export function extractTime(text) {
+  const t = String(text || "");
+  // 直接 HH:MM / H:MM（兼容全角冒号）
+  const direct = /(\d{1,2})\s*[:：]\s*(\d{2})/.exec(t);
+  if (direct) {
+    const h = +direct[1], m = +direct[2];
+    if (h >= 0 && h <= 23 && m >= 0 && m <= 59) return `${pad2(h)}:${pad2(m)}`;
+  }
+  const m = TIME_CN_RE.exec(t);
+  if (!m) return null;
+  let hour = +m[2];
+  const minute = m[3] ? +m[3] : 0;
+  const prefix = m[1];
+  if (prefix) {
+    if (/下午|晚上|傍晚/.test(prefix)) {
+      if (hour < 12) hour += 12; // 下午3点 → 15:00
+    } else if (prefix === "中午") {
+      if (hour !== 12) hour += 12; // 中午1点 → 13:00
+    }
+  }
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return `${pad2(hour)}:${pad2(minute)}`;
+}
 
 // ---------------------------------------------------------------------------
 // 分类 / 优先级
@@ -114,8 +146,7 @@ export function parseRules(text, now = new Date()) {
   const drafts = [];
   for (const seg of parts) {
     const due = resolveDate(seg, now);
-    const timeM = /(?:上午|早上|中午|下午|晚上)?\s*(\d{1,2})[点时](\d{1,2})?分?[钟]?/.exec(seg);
-    const timeNote = timeM ? `${pad2(+timeM[1])}:${pad2(timeM[2] ? +timeM[2] : 0)}` : null;
+    const timeNote = extractTime(seg);
     let title = seg
       .replace(/^(帮我|请|记得|提醒我|我要?|需要|添加任务|新增任务|加个?任务|记一笔|然后|接着|还有|再|add task|remind me to|please)\s*/i, "")
       .replace(/^(把|将)\s*/, "");
@@ -123,10 +154,10 @@ export function parseRules(text, now = new Date()) {
       title = title
         .replace(/(大)?后天|今天|今日|明天|明日|昨天|昨日/g, "")
         .replace(/(下{1,2}|本)?(周|星期|礼拜)[一二三四五六日天]/g, "")
-        .replace(/\d{1,2}月\d{1,2}[日号]/g, "")
+        .replace(/\d{1,2}\s*(?:月|[\/])\s*\d{1,2}\s*[日号]?/g, "")
         .replace(/\d{4}-\d{1,2}-\d{1,2}/g, "");
     }
-    if (timeM) title = title.replace(/(?:上午|早上|中午|下午|晚上)?\s*\d{1,2}[点时]\d{1,2}?分?[钟]?/g, "");
+    if (timeNote) title = title.replace(TIME_CN_RE_G, "").replace(/\d{1,2}\s*[:：]\s*\d{2}/g, "");
     title = title
       .replace(/(紧急|重要|优先|不急|不着急|有空再|顺便|asap|urgent|important)/gi, "")
       .replace(/(加上?任务|安排(一下)?|加上?|的?任务)$/g, "")

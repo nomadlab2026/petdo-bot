@@ -1,7 +1,7 @@
 {
   "slug": "petdo",
   "name": "PetDo · Pet Task Buddy",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "executa_type": "tool",
   "description": "Local executa plugin for PetDo: natural-language/voice task parsing, task storage with pet XP progression, weekly/monthly/yearly stats. Anna Executa stdio JSON-RPC plugin (Node.js, zero dependencies).",
   "tool_id": "tool-airamuse-petdo-etxhvhta",
@@ -33,3 +33,4 @@
     }
   }
 }
+

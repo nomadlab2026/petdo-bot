@@ -1,6 +1,6 @@
 {
   "name": "petdo-task-pet",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "PetDo · Pet Task Buddy — Anna Executa stdio plugin (Node.js, zero deps): chat/voice task capture with a virtual pet, weekly/monthly/yearly reports",
   "license": "MIT",
   "type": "commonjs",
